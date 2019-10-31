@@ -17,7 +17,9 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"strconv"
 
 	"github.com/spf13/cobra"
 
@@ -25,21 +27,44 @@ import (
 	"github.com/spf13/viper"
 )
 
+// variables for flags
 var cfgFile string
+var n int8
+var s []float32
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "bill",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "A CLI tool that calculates how much you need to pay for your bill.",
+	Long:  ``,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	//	Run: func(cmd *cobra.Command, args []string) { },
+	Args: cobra.MinimumNArgs(1),
+	Run:  BillImpl,
+}
+
+// BillImpl contains the logic of this CLI tool.
+func BillImpl(cmd *cobra.Command, args []string) {
+	// 1. figure out the principle
+	var principle float32
+	parsedFloat, err := strconv.ParseFloat(args[0], 32)
+	if err != nil {
+		log.Fatal(err)
+	}
+	principle = float32(parsedFloat)
+	// 2. calculate the amount to pay from the split
+	// check if a split is specified
+	var split float32 = 0
+	if len(s) > 0 {
+		for i := range s {
+			split += s[i]
+		}
+		split = split / float32(n)
+	}
+	// 3. add the result from (1) and (2)
+	result := principle + split
+
+	fmt.Println("The amount to be paid is: ", result)
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -59,10 +84,9 @@ func init() {
 	// will be global for your application.
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.bill.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// (bevensteven) added flags for tool
+	rootCmd.Flags().Int8VarP(&n, "numPeople", "n", 1, "The number of people to split the to divide arguments with.")
+	rootCmd.Flags().Float32SliceVarP(&s, "splits", "s", make([]float32, 0), `An iterable of values to be split among n people. Example: -s 10,10,10`)
 }
 
 // initConfig reads in config file and ENV variables if set.
