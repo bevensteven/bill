@@ -15,7 +15,7 @@ limitations under the License.
 */
 package main
 
-import "bill/cmd"
+import "github.com/bevensteven/bill/cmd"
 
 func main() {
 	cmd.Execute()
