@@ -16,6 +16,7 @@ limitations under the License.
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -37,21 +38,23 @@ var rootCmd = &cobra.Command{
 	Use:   "bill",
 	Short: "A CLI tool that calculates how much you need to pay for your bill.",
 	Long:  ``,
+	Args:  validateBillArgs,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	Args: cobra.MinimumNArgs(1),
-	Run:  BillImpl,
+	Run: BillImpl,
 }
 
 // BillImpl contains the logic of this CLI tool.
 func BillImpl(cmd *cobra.Command, args []string) {
 	// 1. figure out the principle
 	var principle float32
-	parsedFloat, err := strconv.ParseFloat(args[0], 32)
-	if err != nil {
-		log.Fatal(err)
+	if len(args) > 0 {
+		parsedFloat, err := strconv.ParseFloat(args[0], 32)
+		if err != nil {
+			log.Fatal(err)
+		}
+		principle = float32(parsedFloat)
 	}
-	principle = float32(parsedFloat)
 	// 2. calculate the amount to pay from the split
 	// check if a split is specified
 	var split float32 = 0
@@ -64,7 +67,16 @@ func BillImpl(cmd *cobra.Command, args []string) {
 	// 3. add the result from (1) and (2)
 	result := principle + split
 
-	fmt.Println("The amount to be paid is: ", result)
+	fmt.Println("The amount to pay is: ", result)
+}
+
+// validateBillArgs is the argument validator for this CLI tool.
+func validateBillArgs(cmd *cobra.Command, args []string) error {
+	// if no principle is specified, s should be specified
+	if len(args) == 0 && len(s) == 0 {
+		return errors.New("Please provide a principle amount or list of items to split for the bill")
+	}
+	return nil
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
